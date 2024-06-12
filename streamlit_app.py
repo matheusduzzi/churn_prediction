@@ -62,7 +62,7 @@ if uploaded_file is not None:
     input_data = pd.read_csv(uploaded_file)
 
     #predictions = predict_churn(input_data)
-    input_data['Churn Prediction'] = = np.random.randint(0, 2, size=len(input_data)) # predictions
+    input_data['Churn Prediction'] = np.random.randint(0, 2, size=len(input_data)) # predictions
     st.write('Previsões de Churn:')
     st.write(input_data)
 
