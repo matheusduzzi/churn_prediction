@@ -12,15 +12,10 @@ def load_model():
 model = load_model()
 
 # Função de pré-processamento
-def preprocess_data(data, freq_encoding, one_hot_encoder):
+def preprocess_data(data, freq_encoding, one_hot_encoder, label_encoders):
     # Label Encoding para 'international_plan' e 'voice_mail_plan'
-    label_encoders = {
-        'international_plan': LabelEncoder(),
-        'voice_mail_plan': LabelEncoder()
-    }
-
-    data['international_plan'] = label_encoders['international_plan'].fit_transform(data['international_plan'])
-    data['voice_mail_plan'] = label_encoders['voice_mail_plan'].fit_transform(data['voice_mail_plan'])
+    for col in ['international_plan', 'voice_mail_plan']:
+        data[col] = label_encoders[col].transform(data[col])
 
     # Frequency Encoding para 'state'
     data['state'] = data['state'].map(freq_encoding)
@@ -51,8 +46,8 @@ def preprocess_data(data, freq_encoding, one_hot_encoder):
     return data
 
 # Função para fazer previsões
-def predict_churn(data, freq_encoding, one_hot_encoder):
-    processed_data = preprocess_data(data, freq_encoding, one_hot_encoder)
+def predict_churn(data, freq_encoding, one_hot_encoder, label_encoders):
+    processed_data = preprocess_data(data, freq_encoding, one_hot_encoder, label_encoders)
     prediction = model.predict(processed_data)
     return prediction
 
@@ -60,9 +55,16 @@ def predict_churn(data, freq_encoding, one_hot_encoder):
 train_data = pd.read_csv('train.csv')
 state_freq = train_data['state'].value_counts(normalize=True).to_dict()
 
-# Treinar o OneHotEncoder
+# Treinar o OneHotEncoder e LabelEncoders
 one_hot_encoder = OneHotEncoder()
 one_hot_encoder.fit(train_data[['area_code']])
+
+label_encoders = {
+    'international_plan': LabelEncoder(),
+    'voice_mail_plan': LabelEncoder()
+}
+for col in label_encoders.keys():
+    label_encoders[col].fit(train_data[col])
 
 # Título da aplicação
 st.title('Predição de Churn')
@@ -86,7 +88,7 @@ if uploaded_file is not None:
 
     input_data = input_data[required_columns]
 
-    predictions = predict_churn(input_data, state_freq, one_hot_encoder)
+    predictions = predict_churn(input_data, state_freq, one_hot_encoder, label_encoders)
     input_data['Churn Prediction'] = predictions
     st.write('Previsões de Churn:')
     st.write(input_data)
