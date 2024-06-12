@@ -39,7 +39,10 @@ def preprocess_data(df_train):
   for key in numeric_min.keys():
       df_enc_train[key] = round((df_enc_train[key] - numeric_min[key])/ (numeric_max[key]-numeric_min[key]),3)
 
-  return df_enc_train
+  try:
+      df_enc_train.drop("id",inplace=True,axis=1)
+  except KeyError:
+    print("A coluna 'id' não existe no DataFrame.") 
 
 # Função para fazer previsões
 def predict_churn(data):
