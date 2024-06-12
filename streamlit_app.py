@@ -37,7 +37,7 @@ def preprocess_data(df_train):
   numeric_max = df_enc_train[numerical].max().to_dict()
 
   for key in numeric_min.keys():
-      df_enc_train[key] = round((df_enc_train[key] - numeric_min[key])/ (numeric_max[key]-numeric_min[key]),decimal_places=3)
+      df_enc_train[key] = round((df_enc_train[key] - numeric_min[key])/ (numeric_max[key]-numeric_min[key]),3)
 
   return df_enc_train
 
