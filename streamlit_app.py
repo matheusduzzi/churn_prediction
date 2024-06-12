@@ -1,7 +1,7 @@
 import joblib
 import pandas as pd
 import streamlit as st
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 # Função para carregar o modelo
 @st.cache_resource
@@ -12,59 +12,40 @@ def load_model():
 model = load_model()
 
 # Função de pré-processamento
-def preprocess_data(data, freq_encoding, one_hot_encoder, label_encoders):
-    # Label Encoding para 'international_plan' e 'voice_mail_plan'
-    for col in ['international_plan', 'voice_mail_plan']:
-        data[col] = label_encoders[col].transform(data[col])
+def preprocess_data(df_train):
+  categorical = list(df_train.select_dtypes(['object']).columns)
+  numerical = list(df_train.select_dtypes(['float64','int64']).columns)
 
-    # Frequency Encoding para 'state'
-    data['state'] = data['state'].map(freq_encoding)
+  # desmembrando cada codigo de area para coluna
+  enc_one = OneHotEncoder()
+  x = df_train["area_code"].values.reshape(-1,1)
+  val_train = enc_one.fit_transform(x).toarray()
+  df_onehot_train = pd.DataFrame(val_train,columns=['is_'+str(enc_one.categories_[0][i]) for i in range(len(enc_one.categories_[0]))])
 
-    # One-hot encoding para 'area_code'
-    area_code_encoded = one_hot_encoder.transform(data[['area_code']]).toarray()
-    area_code_columns = ['is_' + str(cat) for cat in one_hot_encoder.categories_[0]]
-    area_code_df = pd.DataFrame(area_code_encoded, columns=area_code_columns)
+  df_c = df_train.copy()
 
-    data = data.drop(columns=['area_code']).join(area_code_df)
+  df_onehot_train = df_onehot_train.reset_index(drop=True)
+  df_c = df_c.reset_index(drop=True)
+  df_enc_train = pd.concat([df_onehot_train, df_c],axis=1)
 
-    # Adicionar colunas faltantes (caso necessário)
-    required_columns = [
-        'account_length', 'number_vmail_messages', 'total_day_minutes', 'total_day_calls',
-        'total_day_charge', 'total_eve_minutes', 'total_eve_calls', 'total_eve_charge',
-        'total_night_minutes', 'total_night_calls', 'total_night_charge', 'total_intl_minutes',
-        'total_intl_calls', 'total_intl_charge', 'number_customer_service_calls', 'state',
-        'international_plan', 'voice_mail_plan'
-    ] + area_code_columns
+  # exluindo a coluna modificada
+  df_enc_train.drop("area_code",inplace=True,axis=1)
+  frq_dis = df_enc_train.groupby('state').size()/len(df_train)
+  df_enc_train["state"] = df_enc_train.state.map(frq_dis)
 
-    for col in required_columns:
-        if col not in data.columns:
-            data[col] = 0
+  numeric_min = df_enc_train[numerical].min().to_dict()
+  numeric_max = df_enc_train[numerical].max().to_dict()
 
-    # Garantir a ordem correta das colunas
-    data = data[required_columns]
+  for key in numeric_min.keys():
+      df_enc_train[key] = round((df_enc_train[key] - numeric_min[key])/ (numeric_max[key]-numeric_min[key]),decimal_places=3)
 
-    return data
+  return df_enc_train
 
 # Função para fazer previsões
-def predict_churn(data, freq_encoding, one_hot_encoder, label_encoders):
-    processed_data = preprocess_data(data, freq_encoding, one_hot_encoder, label_encoders)
+def predict_churn(data):
+    processed_data = preprocess_data(data)
     prediction = model.predict(processed_data)
     return prediction
-
-# Carregar os dados de treino para calcular as frequências
-train_data = pd.read_csv('train.csv')
-state_freq = train_data['state'].value_counts(normalize=True).to_dict()
-
-# Treinar o OneHotEncoder e LabelEncoders
-one_hot_encoder = OneHotEncoder()
-one_hot_encoder.fit(train_data[['area_code']])
-
-label_encoders = {
-    'international_plan': LabelEncoder(),
-    'voice_mail_plan': LabelEncoder()
-}
-for col in label_encoders.keys():
-    label_encoders[col].fit(train_data[col])
 
 # Título da aplicação
 st.title('Predição de Churn')
@@ -76,19 +57,7 @@ uploaded_file = st.file_uploader("Escolha o arquivo CSV", type="csv")
 if uploaded_file is not None:
     input_data = pd.read_csv(uploaded_file)
 
-    # Ordenar as colunas de acordo com o esperado pelo modelo
-    required_columns = [
-        'state', 'account_length', 'area_code', 'international_plan', 'voice_mail_plan',
-        'number_vmail_messages', 'total_day_minutes', 'total_day_calls',
-        'total_day_charge', 'total_eve_minutes', 'total_eve_calls',
-        'total_eve_charge', 'total_night_minutes', 'total_night_calls',
-        'total_night_charge', 'total_intl_minutes', 'total_intl_calls',
-        'total_intl_charge', 'number_customer_service_calls'
-    ]
-
-    input_data = input_data[required_columns]
-
-    predictions = predict_churn(input_data, state_freq, one_hot_encoder, label_encoders)
+    predictions = predict_churn(input_data)
     input_data['Churn Prediction'] = predictions
     st.write('Previsões de Churn:')
     st.write(input_data)
