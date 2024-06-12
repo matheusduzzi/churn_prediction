@@ -73,6 +73,19 @@ uploaded_file = st.file_uploader("Escolha o arquivo CSV", type="csv")
 
 if uploaded_file is not None:
     input_data = pd.read_csv(uploaded_file)
+
+    # Ordenar as colunas de acordo com o esperado pelo modelo
+    required_columns = [
+        'state', 'account_length', 'area_code', 'international_plan', 'voice_mail_plan',
+        'number_vmail_messages', 'total_day_minutes', 'total_day_calls',
+        'total_day_charge', 'total_eve_minutes', 'total_eve_calls',
+        'total_eve_charge', 'total_night_minutes', 'total_night_calls',
+        'total_night_charge', 'total_intl_minutes', 'total_intl_calls',
+        'total_intl_charge', 'number_customer_service_calls'
+    ]
+
+    input_data = input_data[required_columns]
+
     predictions = predict_churn(input_data, state_freq, one_hot_encoder)
     input_data['Churn Prediction'] = predictions
     st.write('Previsões de Churn:')
