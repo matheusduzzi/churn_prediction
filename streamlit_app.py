@@ -1,5 +1,5 @@
 #! pip install streamlit
-pip install joblib
+!pip install joblib
 
 import streamlit as st
 import joblib
