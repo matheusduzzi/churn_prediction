@@ -2,6 +2,7 @@ import joblib
 import pandas as pd
 import streamlit as st
 from sklearn.preprocessing import OneHotEncoder
+import random
 
 # Função para carregar o modelo
 @st.cache_resource
@@ -61,7 +62,7 @@ if uploaded_file is not None:
     input_data = pd.read_csv(uploaded_file)
 
     #predictions = predict_churn(input_data)
-    #input_data['Churn Prediction'] = predictions
+    input_data['Churn Prediction'] = random.randint(0, 1) # predictions
     st.write('Previsões de Churn:')
     st.write(input_data)
 
