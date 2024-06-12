@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 # Carregar o modelo
-model = joblib.load('/content/churn_model.pkl')
+model = joblib.load('churn_model.pkl')
 
 # Função de pré-processamento
 def preprocess_data(data, freq_encoding, one_hot_encoder):
@@ -61,7 +61,7 @@ def predict_churn(data, freq_encoding, one_hot_encoder):
     return prediction[0]
 
 # Carregar os dados de treino para calcular as frequências
-train_data = pd.read_csv('/content/train.csv')
+train_data = pd.read_csv('train.csv')
 state_freq = train_data['state'].value_counts(normalize=True).to_dict()
 
 # Treinar o OneHotEncoder
