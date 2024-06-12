@@ -60,7 +60,7 @@ uploaded_file = st.file_uploader("Escolha o arquivo CSV", type="csv")
 if uploaded_file is not None:
     input_data = pd.read_csv(uploaded_file)
 
-    predictions = predict_churn(input_data)
+    #predictions = predict_churn(input_data)
     input_data['Churn Prediction'] = predictions
     st.write('Previsões de Churn:')
     st.write(input_data)
