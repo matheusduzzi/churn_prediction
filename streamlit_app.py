@@ -1,15 +1,19 @@
-import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
+import streamlit as st
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
+# Função para carregar o modelo
+@st.cache(allow_output_mutation=True)
+def load_model():
+    return joblib.load('model/churn_model.pkl')
+
 # Carregar o modelo
-model = joblib.load('churn_model.pkl')
+model = load_model()
 
 # Função de pré-processamento
 def preprocess_data(data, freq_encoding, one_hot_encoder):
-    # Criar um dataframe com os dados de entrada
     df = pd.DataFrame([data], columns=['state', 'account_length', 'area_code', 'international_plan', 'voice_mail_plan',
                                        'number_vmail_messages', 'total_day_minutes', 'total_day_calls',
                                        'total_day_charge', 'total_eve_minutes', 'total_eve_calls',
@@ -73,9 +77,9 @@ st.title('Predição de Churn')
 
 # Formulário para entrada de dados
 st.header('Insira os dados do cliente:')
-state = st.selectbox('Estado', ['OH', 'NJ', 'OK', 'MA'])
+state = st.selectbox('Estado', train_data['state'].unique())
 account_length = st.number_input('Comprimento da Conta', min_value=0, max_value=500, value=100)
-area_code = st.selectbox('Código de Área', ['area_code_415', 'area_code_408', 'area_code_510'])
+area_code = st.selectbox('Código de Área', train_data['area_code'].unique())
 international_plan = st.selectbox('Plano Internacional', ['yes', 'no'])
 voice_mail_plan = st.selectbox('Plano de Correio de Voz', ['yes', 'no'])
 number_vmail_messages = st.number_input('Número de Mensagens de Voz', min_value=0, max_value=50, value=0)
@@ -102,6 +106,5 @@ if st.button('Prever Churn'):
     churn = predict_churn(data, state_freq, one_hot_encoder)
     st.write(f'O cliente irá churn: {churn}')
 
-# Rodar a aplicação Streamlit
 if __name__ == '__main__':
     st.set_option('deprecation.showfileUploaderEncoding', False)
